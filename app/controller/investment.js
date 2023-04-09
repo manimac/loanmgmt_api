@@ -17,6 +17,17 @@ exports.list = async function (req, res) {
 
 exports.create = async function (req, res) {
     try {
+        // if(req.body.type == 'Redeem'){
+        //     const isUnitsAvailable = await Model.findOne({
+        //         where: {
+        //             type: 'Purchase'
+        //         },
+        //         attributes: [
+        //             [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("units"), 'integer')), "totalunits"],
+        //         ]
+        //     });
+        //     console.log(isUnitsAvailable)
+        // }
         const investmentRec = await Model.create(req.body);
         const obj = {
             type: 'Investment',

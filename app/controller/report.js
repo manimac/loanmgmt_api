@@ -18,10 +18,24 @@ async function calculateInterest(activeLoansInterest) {
     }
     return interestAmount ? interestAmount.toFixed(2) : interestAmount;
   }
+
+async function calculatePriniciple(activeLoansInterest) {
+    let PrinicipleAmount = 0;
+    for (const element of activeLoansInterest) {
+        PrinicipleAmount = PrinicipleAmount + (Number(element.principle));
+    }
+    return PrinicipleAmount ? PrinicipleAmount.toFixed(2) : PrinicipleAmount;
+  }
   
 
 exports.list = async function (req, res) {
     try {
+        if(req.body.fromdate){
+            req.body.fromdate = req.body.fromdate + " 00:00:00";
+        }
+        if(req.body.todate){
+            req.body.todate = req.body.todate + " 23:59:59";
+        }
         const newLoans = await loanhistoryModel.findAll({
             where: {
                 status: 2,
@@ -129,25 +143,25 @@ exports.list = async function (req, res) {
             having: Sequelize.literal('days_between > 180')
         });
 
-        const overdueLoansprinciple = await loanModel.findAll({
-            attributes: [
-                [
-                    Sequelize.literal(
-                        `DATEDIFF(CURDATE(), renewaldate)`
-                    ),
-                    'days_between'
-                ],
-                'principle',
-                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("principle"), 'integer')), "totalprinciple"],
-            ],
-            where: {
-                status: 2,
-                renewaldate: {
-                    [Op.not]: null,
-                }
-            },
-            having: Sequelize.literal('days_between > 180')
-        });
+        // const overdueLoansprinciple = await loanModel.findAll({
+        //     attributes: [
+        //         [
+        //             Sequelize.literal(
+        //                 `DATEDIFF(CURDATE(), renewaldate)`
+        //             ),
+        //             'days_between'
+        //         ],
+        //         'principle',
+        //         [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("principle"), 'integer')), "totalprinciple"],
+        //     ],
+        //     where: {
+        //         status: 2,
+        //         renewaldate: {
+        //             [Op.not]: null,
+        //         }
+        //     },
+        //     having: Sequelize.literal('days_between > 180')
+        // });
 
         const overdueLoansInterest = await loanModel.findAll({
             attributes: [
@@ -190,10 +204,10 @@ exports.list = async function (req, res) {
 
 
         const overdueInterest = await calculateInterest(overdueLoansInterest);
-        let overdueLoanPrinciple = 0;
-        if(overdueLoansprinciple && Array.isArray(overdueLoansprinciple) && overdueLoansprinciple.length>0){
-            overdueLoanPrinciple = overdueLoansprinciple[0].dataValues.totalprinciple;
-        }
+        let overdueLoanPrinciple = await calculatePriniciple(overdueLoansInterest);
+        // if(overdueLoansprinciple && Array.isArray(overdueLoansprinciple) && overdueLoansprinciple.length>0){
+        //     overdueLoanPrinciple = overdueLoansprinciple[0].dataValues.totalprinciple;
+        // }
         let totaloverdueAmount = Number(overdueInterest) + Number(overdueLoanPrinciple);
 
         let unitrate = parseFloat(Number(netAsset) / Number(units)).toFixed(2);

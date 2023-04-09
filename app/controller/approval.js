@@ -14,12 +14,18 @@ const paymenthistoryModel = MODELS.paymenthistory;
 
 exports.filterlist = async function (req, res) {
     try {
+        let where = {};
+        if(req.body.fromdate){
+            req.body.fromdate = req.body.fromdate + " 00:00:00";
+        }
+        if(req.body.todate){
+            req.body.todate = req.body.todate + " 23:59:59";
+        }
+        where['updatedAt'] = {
+            [Op.between]: [req.body.fromdate, req.body.todate]
+        }
         const entries = await Model.findAll({
-            where: {
-                updatedAt: {
-                    [Op.between]: [req.body.fromdate, req.body.todate]
-                }
-            },
+            where,
             order: [['updatedAt', 'DESC']],
             include: [
                 {
@@ -117,7 +123,7 @@ exports.update = async function (req, res) {
                         paymentValue = Number(paymentDetails.value) - Number(loanHistoryResult.disbursed);
                     }
                     await paymentModel.update({ value: paymentValue }, { where: { type: loanHistoryResult.paymenttype } });
-                    await paymenthistoryModel.create({type: loanHistoryResult.paymenttype, value: paymentValue});
+                    await paymenthistoryModel.create({ type: loanHistoryResult.paymenttype, value: paymentValue });
                 }
                 break;
             case 'Investment':
@@ -135,15 +141,15 @@ exports.update = async function (req, res) {
                 if (req.body.status == 2) {
                     let paymentValue2 = 0;
                     if (paymentDetails2 && paymentDetails2.value) {
-                        if(investmentResult.type == 'Purchase'){
+                        if (investmentResult.type == 'Purchase') {
                             paymentValue2 = Number(paymentDetails2.value) + Number(investmentResult.value);
                         }
-                        else{
+                        else {
                             paymentValue2 = Number(paymentDetails2.value) - Number(investmentResult.value);
-                        }                        
+                        }
                     }
                     await paymentModel.update({ value: paymentValue2 }, { where: { type: investmentResult.paymenttype } });
-                    await paymenthistoryModel.create({type: investmentResult.paymenttype, value: paymentValue2});
+                    await paymenthistoryModel.create({ type: investmentResult.paymenttype, value: paymentValue2 });
                 }
                 break;
             case 'Repayment':
@@ -168,7 +174,7 @@ exports.update = async function (req, res) {
                         paymentValue3 = Number(paymentDetails3.value) + Number(repaymentResult.amount);
                     }
                     await paymentModel.update({ value: paymentValue3 }, { where: { type: repaymentResult.paymenttype } });
-                    await paymenthistoryModel.create({type: repaymentResult.paymenttype, value: paymentValue3});
+                    await paymenthistoryModel.create({ type: repaymentResult.paymenttype, value: paymentValue3 });
                 }
                 break;
             default:

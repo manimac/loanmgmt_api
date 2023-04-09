@@ -11,6 +11,7 @@ const report = require('../app/controller/report');
 const pricehistory = require('../app/controller/pricehistory');
 
 router.get('/profile/list', profile.list);
+router.post('/profile/filterlist', profile.filterlist);
 router.post('/profile/isMobileExist', profile.isMobileExist);
 router.post('/profile/create', profile.create);
 router.post('/profile/update', profile.update);

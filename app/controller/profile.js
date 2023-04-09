@@ -24,6 +24,32 @@ exports.list = function (req, res) {
     });
 }
 
+exports.filterlist = async function (req, res) {
+    const where = {};
+    if (req.body.mobile) where.mobile = { [Op.startsWith]: req.body.mobile };
+    if (req.body.status) where.status = req.body.status;
+    if (req.body.payout) where.nomineemobile = req.body.payout;
+    // Model.findAll({
+    //     where,
+    //     order: [
+    //         ['updatedAt', 'DESC']
+    //     ]
+    // }).then(function (entries) {
+    //     res.send(entries || null)
+    // });
+    const entries = await Model.findAll({
+        where,
+        order: [
+            ['updatedAt', 'DESC']
+        ]
+    });
+
+    const investment = await investmentModel.findAll({
+        order: [['updatedAt', 'DESC']]
+    });
+    res.send({ entries: entries, investment: investment });
+}
+
 exports.isMobileExist = async function (req, res) {
     const { mobile, id } = req.body;
     const where = id ? { mobile, id: { [Op.not]: id } } : { mobile };
