@@ -11,6 +11,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const async = require('async');
+var request = require('request');
 
 
 
@@ -189,7 +190,17 @@ exports.login = async function (req, res) {
 
     try {
         await Model.update({ otp }, { where: { id: isMobileExist.id } });
-        res.send(otp);
+        var headers = {
+            'Content-Type': 'application/json'
+        }
+        var options = {
+            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + isMobileExist.mobile + `&msg=Dear%20` + isMobileExist.name + `,%20Your%20one%20time%20password%20is%20` + otp + `%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258359`,
+            method: 'POST',
+            headers: headers
+        }
+        await request(options)
+        res.send({msg: "Success"})
+        // res.send(otp);
     } catch (err) {
         res.status(500).send(err);
     }

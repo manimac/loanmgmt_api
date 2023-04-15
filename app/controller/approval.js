@@ -10,6 +10,7 @@ const investmentModel = MODELS.investment;
 const repaymenthistoryModel = MODELS.repaymenthistory;
 const paymentModel = MODELS.payment;
 const paymenthistoryModel = MODELS.paymenthistory;
+var request = require('request');
 
 
 exports.filterlist = async function (req, res) {
@@ -124,6 +125,25 @@ exports.update = async function (req, res) {
                     }
                     await paymentModel.update({ value: paymentValue }, { where: { type: loanHistoryResult.paymenttype } });
                     await paymenthistoryModel.create({ type: loanHistoryResult.paymenttype, value: paymentValue });
+
+
+                    const profileDetails = await profileModel.findOne({
+                        where: {
+                            id: loanHistoryResult.profile_id,
+                        }
+                    });
+                    if(profileDetails){
+                        var headers = {
+                            'Content-Type': 'application/json'
+                        }
+                        var options = {
+                            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + loanHistoryResult.disbursed + `%20New%20loan%20disbursed%20under%20Loan%20No:` + loanHistoryResult.loan_id + `.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258364`,
+                            method: 'POST',
+                            headers: headers
+                        }
+                        await request(options)
+                    }                    
+
                 }
                 break;
             case 'Investment':
@@ -150,6 +170,34 @@ exports.update = async function (req, res) {
                     }
                     await paymentModel.update({ value: paymentValue2 }, { where: { type: investmentResult.paymenttype } });
                     await paymenthistoryModel.create({ type: investmentResult.paymenttype, value: paymentValue2 });
+
+                    const profileDetails = await profileModel.findOne({
+                        where: {
+                            id: investmentResult.profile_id,
+                        }
+                    });
+                    if(profileDetails){
+                        var headers = {
+                            'Content-Type': 'application/json'
+                        }
+                        if(investmentResult.type == 'Purchase'){
+                            var options = {
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+                                method: 'POST',
+                                headers: headers
+                            }
+                            await request(options)
+                        }
+                        else if(investmentResult.type == 'Redeem'){
+                            var options = {
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                                method: 'POST',
+                                headers: headers
+                            }
+                            await request(options)
+                        }
+                        
+                    }             
                 }
                 break;
             case 'Repayment':
@@ -175,6 +223,22 @@ exports.update = async function (req, res) {
                     }
                     await paymentModel.update({ value: paymentValue3 }, { where: { type: repaymentResult.paymenttype } });
                     await paymenthistoryModel.create({ type: repaymentResult.paymenttype, value: paymentValue3 });
+                    const profileDetails = await profileModel.findOne({
+                        where: {
+                            id: repaymentResult.profile_id,
+                        }
+                    });
+                    if(profileDetails){
+                        var headers = {
+                            'Content-Type': 'application/json'
+                        }
+                        var options = {
+                            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + repaymentResult.amount + `%20received%20against%20Loan%20No:` + repaymentResult.loan_id + `.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258365`,
+                            method: 'POST',
+                            headers: headers
+                        }
+                        await request(options)
+                    }
                 }
                 break;
             default:
@@ -186,3 +250,95 @@ exports.update = async function (req, res) {
         res.status(500).send(err);
     }
 };
+
+async function calculateInterest(activeLoansInterest) {
+    for(var i = 0;i< activeLoansInterest.length;i++){
+        activeLoansInterest[i].dataValues['interestAmount'] = ((Number(activeLoansInterest[i].principle) * (Number(activeLoansInterest[i].rateofinterest) / 100)) / 365) * Number(activeLoansInterest[i].dataValues.days_between);
+    }
+    return activeLoansInterest;
+  }
+
+async function overdueSend(loans) {
+    for(var i = 0;i< loans.length;i++){
+        var headers = {
+            'Content-Type': 'application/json'
+        }
+        var options = {
+            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + loans[i].mobile + `&msg=Final%20Notice-%20Dear%20Cust,%20Rs.` + loans[i].dataValues['interestAmount'] + `%20due%20against%20Loan%20No:` + loans[i].id + `.%20To%20stop%20further%20action%20pls%20pay%20the%20interest%20atleast%20for%20renewal.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258367`,
+            method: 'POST',
+            headers: headers
+        }
+        await request(options)
+    }
+    return loans;
+  }
+
+async function dueSend(loans) {
+    for(var i = 0;i< loans.length;i++){
+        var headers = {
+            'Content-Type': 'application/json'
+        }
+        var options = {
+            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + loans[i].mobile + `&msg=Due%20Notice-%20Dear%20Cust,%20Rs.` + loans[i].dataValues['interestAmount'] + `%20due%20against%20Loan%20No:` + loans[i].id + `.%20To%20stop%20further%20action%20pls%20pay%20the%20interest%20atleast%20for%20renewal.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258367`,
+            method: 'POST',
+            headers: headers
+        }
+        await request(options)
+    }
+    return loans;
+  }
+
+exports.eventDueOverdue = async function (req, res) {
+    const overdueLoans = await loanModel.findAll({
+        attributes: [
+            [
+                Sequelize.literal(
+                    `DATEDIFF(CURDATE(), renewaldate)`
+                ),
+                'days_between'
+            ],
+            'mobile','id',
+            'principle',
+            'rateofinterest'
+        ],
+        where: {
+            status: 2,
+            renewaldate: {
+                [Op.not]: null,
+            }
+        },
+        having: Sequelize.literal('days_between > 180')
+    });
+    const dueLoans = await loanModel.findAll({
+        attributes: [
+            [
+                Sequelize.literal(
+                    `DATEDIFF(CURDATE(), renewaldate)`
+                ),
+                'days_between'
+            ],
+            'mobile','id',
+            'principle',
+            'rateofinterest'
+        ],
+        where: {
+            status: 2,
+            renewaldate: {
+                [Op.not]: null,
+            }
+        },
+        having: Sequelize.literal('days_between > 150 AND days_between < 180')
+    });
+    // let overdueLoansMobile = overdueLoans.map(a => a.mobile);
+    // overdueLoansMobile = overdueLoansMobile.join(',');
+    // let dueLoansMobile = dueLoans.map(a => a.mobile);
+    // dueLoansMobile = dueLoansMobile.join(',');
+
+    const overdueInterest = await calculateInterest(overdueLoans);
+    const dueInterest = await calculateInterest(dueLoans);
+
+    await overdueSend(overdueInterest);
+    await dueSend(dueInterest);
+
+    res.send({overdueLoans, dueLoans});
+}

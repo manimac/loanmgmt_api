@@ -50,4 +50,6 @@ router.post('/pricehistory/chart', pricehistory.chart);
 router.post('/pricehistory/create', pricehistory.create);
 router.post('/pricehistory/update', pricehistory.update);
 router.delete('/pricehistory/delete/:id', pricehistory.delete);
+
+router.get('/eventDueOverdue', approval.eventDueOverdue);
 module.exports = router;

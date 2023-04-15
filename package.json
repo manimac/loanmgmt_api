@@ -32,6 +32,7 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "randexp": "^0.5.3",
+    "request": "^2.88.2",
     "sequelize": "^6.3.5",
     "smsglobal": "^1.2.1",
     "stripe": "^8.154.0"

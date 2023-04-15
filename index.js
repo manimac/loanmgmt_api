@@ -53,9 +53,9 @@ app.use('/loanmgmt', express.static(path.join(__dirname, '/dist')));
 app.get('/', (request, response) => {
     response.sendfile(path.join(__dirname + '/dist/index.html'));
 })
-app.get('/loanmgmt', (request, response) => {
-        response.sendfile(path.join(__dirname + '/dist/index.html'));
-    })
+// app.get('/loanmgmt', (request, response) => {
+//         response.sendfile(path.join(__dirname + '/dist/index.html'));
+//     })
     /* End of Need for Build */
 app.use(bodyParser.urlencoded({
     extended: true
