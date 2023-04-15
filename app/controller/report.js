@@ -185,10 +185,35 @@ exports.list = async function (req, res) {
 
 
         const investments = await investmentModel.findAll({
+            where: {
+                status: 2
+            },
             group: ['profile_id'],
         })
 
-        const units = await investmentModel.sum('units')
+
+         const PurchaseUnitsCnt = await investmentModel.findAll({
+            where: {
+                status: 2,
+                type: 'Purchase'
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("units"), 'double')), "total"]
+            ]
+        });
+         const RedeemUnitsCnt = await investmentModel.findAll({
+            where: {
+                status: 2,
+                type: 'Redeem'
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("units"), 'double')), "total"]
+            ]
+        });
+
+
+        let units = (PurchaseUnitsCnt && PurchaseUnitsCnt[0].dataValues && RedeemUnitsCnt && RedeemUnitsCnt[0].dataValues) ? (PurchaseUnitsCnt[0].dataValues.total - RedeemUnitsCnt[0].dataValues.total) : 0;
+        // const units = await investmentModel.sum('units')
         const activeInterest = await calculateInterest(activeLoansInterest);
         let activeLoanAmount = 0;
         let noOfActiveLoan = 0;
@@ -200,7 +225,7 @@ exports.list = async function (req, res) {
         let cashValue = cash ? Number(cash.value) : 0;
         let bankValue = bank ? Number(bank.value) : 0;
         let netAsset = Number(totalLoanInterest) + Number(cashValue) + Number(bankValue);
-
+        
 
 
         const overdueInterest = await calculateInterest(overdueLoansInterest);
@@ -236,6 +261,20 @@ exports.list = async function (req, res) {
             unitRedeemedTrans = unitsRedeemed[0].dataValues.totalcount;
             unitRedeemedAmount = unitsRedeemed[0].dataValues.totalvalue;
         }
+
+        if(netAsset){
+            netAsset = parseFloat(netAsset).toFixed(2);
+        }
+        if(totalLoanInterest){
+            totalLoanInterest = parseFloat(totalLoanInterest).toFixed(2);
+        }
+        if(unitrate){
+            unitrate = parseFloat(unitrate).toFixed(4);
+        }
+        if(units){
+            units = parseFloat(units).toFixed(4);
+        }
+
         res.send({ newLoansTrans: newLoansTrans, newLoansAmount: newLoansAmount, loanRepaymentsTrans: loanRepaymentsTrans, loanRepaymentsAmount: loanRepaymentsAmount, unitPurchasedTrans: unitPurchasedTrans, unitPurchasedAmount: unitPurchasedAmount, unitRedeemedTrans: unitRedeemedTrans, unitRedeemedAmount: unitRedeemedAmount, activeLoan: noOfActiveLoan, activeLoanAmount: activeLoanAmount, activeLoanInterest: activeInterest, totalLoanInterest: totalLoanInterest, cash: cashValue, bank: bankValue, netAsset: netAsset, noOfOverdue: overdueLoans.length, overduePrinciple: overdueLoanPrinciple, overdueInterest: overdueInterest, totalOverdue: totaloverdueAmount, noOfInvestments: investments.length, noOfUnits: units, unitRate: unitrate });
     } catch (err) {
         res.status(500).send(err);
