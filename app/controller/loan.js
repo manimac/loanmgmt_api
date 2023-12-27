@@ -75,6 +75,17 @@ exports.filterlist = async function (req, res) {
       res.status(500).send(err);
     }
   };
+exports.filterlistNumbers = async function (req, res) {
+    try {  
+      const entries = await profileModel.findAll({
+        order: [['updatedAt', 'DESC']]
+      });
+  
+      res.send(entries || null);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  };
 
 exports.pendinglist = function (req, res) {
     Model.findAll({

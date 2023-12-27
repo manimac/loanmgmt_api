@@ -23,6 +23,7 @@ router.post('/profile/search', profile.search);
 
 router.get('/loan/list', loan.list);
 router.post('/loan/filterlist', loan.filterlist);
+router.post('/loan/filterlistNumbers', loan.filterlistNumbers);
 router.get('/loan/pendinglist', loan.pendinglist);
 router.post('/loan/create', loan.create);
 router.post('/loan/update', loan.update);

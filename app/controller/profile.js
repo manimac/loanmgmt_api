@@ -48,7 +48,13 @@ exports.filterlist = async function (req, res) {
     const investment = await investmentModel.findAll({
         order: [['updatedAt', 'DESC']]
     });
-    res.send({ entries: entries, investment: investment });
+
+    const mobiles = await Model.findAll({
+        order: [
+            ['updatedAt', 'DESC']
+        ]
+    });
+    res.send({ entries: entries, investment: investment, mobiles: mobiles });
 }
 
 exports.isMobileExist = async function (req, res) {
