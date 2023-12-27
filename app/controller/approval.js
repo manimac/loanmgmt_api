@@ -88,11 +88,23 @@ exports.pendinglist = async function (req, res) {
     }
 };
 
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+
+    return [year, month, day].join('-');
+}
+
 
 exports.update = async function (req, res) {
     try {
-        const result = await Model.findByPk(req.body.id);
-        const resp = await result.update(req.body);
 
         switch (req.body.type) {
             case 'Profile':
@@ -202,19 +214,21 @@ exports.update = async function (req, res) {
                 break;
             case 'Repayment':
                 const repaymentResult = await repaymenthistoryModel.findByPk(req.body.repaymenthistory_id);
+                let renewaldateee = formatDate(repaymentResult.createdAt);
                 const paymentDetails3 = await paymentModel.findOne({
                     where: {
                         type: repaymentResult.paymenttype,
                     }
                 });
                 await repaymentResult.update({ status: req.body.status });
+                console.log(renewaldateee)
                 if (req.body.status === 2 && (repaymentResult.close == 1)) {
                     const loanResult = await loanModel.findByPk(req.body.repaymenthistory.loan_id);
-                    await loanResult.update({ status: 3, principle: repaymentResult.principle });
+                    await loanResult.update({ status: 3, principle: repaymentResult.principle, renewaldate: renewaldateee });
                 }
                 else if (req.body.status === 2) {
                     const loanResult = await loanModel.findByPk(req.body.repaymenthistory.loan_id);
-                    await loanResult.update({ status: req.body.status, principle: repaymentResult.principle });
+                    await loanResult.update({ status: req.body.status, principle: repaymentResult.principle, renewaldate: renewaldateee });
                 }
                 if (req.body.status == 2) {
                     let paymentValue3 = 0;
@@ -244,6 +258,8 @@ exports.update = async function (req, res) {
             default:
                 break;
         }
+        const result = await Model.findByPk(req.body.id);
+        const resp = await result.update(req.body);
 
         res.send(resp);
     } catch (err) {
@@ -254,6 +270,10 @@ exports.update = async function (req, res) {
 async function calculateInterest(activeLoansInterest) {
     for(var i = 0;i< activeLoansInterest.length;i++){
         activeLoansInterest[i].dataValues['interestAmount'] = ((Number(activeLoansInterest[i].principle) * (Number(activeLoansInterest[i].rateofinterest) / 100)) / 365) * Number(activeLoansInterest[i].dataValues.days_between);
+        activeLoansInterest[i].dataValues['interestAmount'] = Number(activeLoansInterest[i].dataValues['interestAmount']) + Number(activeLoansInterest[i].principle);
+        if(activeLoansInterest[i].dataValues['interestAmount']){
+            activeLoansInterest[i].dataValues['interestAmount'] = Number(activeLoansInterest[i].dataValues['interestAmount']).toFixed(2)
+        }
     }
     return activeLoansInterest;
   }
@@ -279,7 +299,7 @@ async function dueSend(loans) {
             'Content-Type': 'application/json'
         }
         var options = {
-            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + loans[i].mobile + `&msg=Due%20Notice-%20Dear%20Cust,%20Rs.` + loans[i].dataValues['interestAmount'] + `%20due%20against%20Loan%20No:` + loans[i].id + `.%20To%20stop%20further%20action%20pls%20pay%20the%20interest%20atleast%20for%20renewal.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258367`,
+            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + loans[i].mobile + `&msg=Due%20Notice-%20Dear%20Cust,%20Rs.` + loans[i].dataValues['interestAmount'] + `%20due%20against%20Loan%20No:` + loans[i].id + `.%20To%20stop%20further%20action%20pls%20pay%20the%20interest%20atleast%20for%20renewal.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258366`,
             method: 'POST',
             headers: headers
         }
@@ -329,6 +349,25 @@ exports.eventDueOverdue = async function (req, res) {
         },
         having: Sequelize.literal('days_between > 150 AND days_between < 180')
     });
+    const loansdaysbetween = await loanModel.findAll({
+        attributes: [
+            [
+                Sequelize.literal(
+                    `DATEDIFF(CURDATE(), renewaldate)`
+                ),
+                'days_between'
+            ],
+            'mobile','id',
+            'principle',
+            'rateofinterest'
+        ],
+        where: {
+            status: 2,
+            renewaldate: {
+                [Op.not]: null,
+            }
+        }
+    });
     // let overdueLoansMobile = overdueLoans.map(a => a.mobile);
     // overdueLoansMobile = overdueLoansMobile.join(',');
     // let dueLoansMobile = dueLoans.map(a => a.mobile);
@@ -340,5 +379,5 @@ exports.eventDueOverdue = async function (req, res) {
     await overdueSend(overdueInterest);
     await dueSend(dueInterest);
 
-    res.send({overdueLoans, dueLoans});
+    res.send({overdueLoans, dueLoans, overdueInterest, dueInterest, loansdaysbetween});
 }
