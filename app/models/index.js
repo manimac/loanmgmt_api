@@ -47,5 +47,5 @@ db.approvals.belongsTo(db.investment, { foreignKey: 'investment_id', targetKey: 
 db.approvals.belongsTo(db.repaymenthistory, { foreignKey: 'repaymenthistory_id', targetKey: 'id' });
 db.approvals.belongsTo(db.profile, { foreignKey: 'maker_id', targetKey: 'id', as: 'maker' });
 db.approvals.belongsTo(db.profile, { foreignKey: 'checker_id', targetKey: 'id', as: 'checker' });
-
+db.loan.hasMany(db.repaymenthistory, { foreignKey: 'loan_id', targetKey: 'id' });
 module.exports = db;

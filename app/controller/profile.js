@@ -238,6 +238,7 @@ exports.search = async function (req, res) {
     if (isMobileExist) {
         const loans = await loanModel.findAll({
             where: { mobile: req.body.mobile },
+            include: [repaymenthistoryModel, Model],
             order: [['updatedAt', 'DESC']]
         });
         const investment = await investmentModel.findAll({

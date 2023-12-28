@@ -5,6 +5,7 @@ const Model = MODELS.loan;
 const loanhistoryModel = MODELS.loanhistory;
 const approvalsModel = MODELS.approvals;
 const profileModel = MODELS.profile;
+const repaymenthistoryModel = MODELS.repaymenthistory;
 
 
 exports.list = async function (req, res) {
@@ -29,7 +30,7 @@ exports.filterlist = async function (req, res) {
       const entries = await Model.findAll({
         where,
         order: [['updatedAt', 'DESC']],
-        include: [profileModel],
+        include: [profileModel, repaymenthistoryModel],
       });
   
       entries.forEach(loan => {
