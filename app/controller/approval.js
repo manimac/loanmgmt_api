@@ -26,7 +26,7 @@ exports.filterlist = async function (req, res) {
             where.loan_id = req.body.loan;
         }
         if (req.body.mobile) {
-            where['$profile.mobile$'] = { [Op.startsWith]: req.body.mobile };
+            where['$maker.mobile$'] = { [Op.startsWith]: req.body.mobile };
         }
         where['updatedAt'] = {
             [Op.between]: [req.body.fromdate, req.body.todate]
