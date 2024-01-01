@@ -28,7 +28,7 @@ exports.filterlist = async function (req, res) {
         if (req.body.mobile) {
             where['$maker.mobile$'] = { [Op.startsWith]: req.body.mobile };
         }
-        where['updatedAt'] = {
+        where['createdAt'] = {
             [Op.between]: [req.body.fromdate, req.body.todate]
         }
         const entries = await Model.findAll({
