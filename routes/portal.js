@@ -9,6 +9,7 @@ const repayment = require('../app/controller/repayment');
 const payment = require('../app/controller/payment');
 const report = require('../app/controller/report');
 const pricehistory = require('../app/controller/pricehistory');
+const deposit = require('../app/controller/deposit');
 
 router.get('/profile/list', profile.list);
 router.post('/profile/filterlist', profile.filterlist);
@@ -53,4 +54,9 @@ router.post('/pricehistory/update', pricehistory.update);
 router.delete('/pricehistory/delete/:id', pricehistory.delete);
 
 router.get('/eventDueOverdue', approval.eventDueOverdue);
+
+//deposit
+router.post('/deposit/list', deposit.list);
+router.post('/deposit/create', deposit.create);
+router.post('/deposithistory/create', deposit.deposithistorycreate);
 module.exports = router;

@@ -10,19 +10,21 @@ const investmentModel = MODELS.investment;
 const repaymenthistoryModel = MODELS.repaymenthistory;
 const paymentModel = MODELS.payment;
 const paymenthistoryModel = MODELS.paymenthistory;
+const depositModel = MODELS.deposit;
+const deposithistoryModel = MODELS.deposithistory;
 var request = require('request');
 
 
 exports.filterlist = async function (req, res) {
     try {
         let where = {};
-        if(req.body.fromdate){
+        if (req.body.fromdate) {
             req.body.fromdate = req.body.fromdate + " 00:00:00";
         }
-        if(req.body.todate){
+        if (req.body.todate) {
             req.body.todate = req.body.todate + " 23:59:59";
         }
-        if(req.body.loan){
+        if (req.body.loan) {
             where.loan_id = req.body.loan;
         }
         if (req.body.mobile) {
@@ -86,7 +88,12 @@ exports.pendinglist = async function (req, res) {
             include: [{
                 model: profileModel,
                 as: 'profile'
-            }, profilehistoryModel, loanhistoryModel, loanModel, investmentModel, repaymenthistoryModel]
+            }, profilehistoryModel, loanhistoryModel, loanModel, investmentModel, repaymenthistoryModel, 
+            {
+                model: deposithistoryModel,
+                as: 'deposithistory',
+                include: [depositModel]
+            }]
         });
         res.send(entries || null);
     } catch (err) {
@@ -100,9 +107,9 @@ function formatDate(date) {
         day = '' + d.getDate(),
         year = d.getFullYear();
 
-    if (month.length < 2) 
+    if (month.length < 2)
         month = '0' + month;
-    if (day.length < 2) 
+    if (day.length < 2)
         day = '0' + day;
 
     return [year, month, day].join('-');
@@ -114,9 +121,9 @@ function formatnormalDate(date) {
         day = '' + d.getDate(),
         year = d.getFullYear();
 
-    if (month.length < 2) 
+    if (month.length < 2)
         month = '0' + month;
-    if (day.length < 2) 
+    if (day.length < 2)
         day = '0' + day;
 
     return [day, month, year].join('-');
@@ -164,7 +171,7 @@ exports.update = async function (req, res) {
                             id: loanHistoryResult.profile_id,
                         }
                     });
-                    if(profileDetails){
+                    if (profileDetails) {
                         var headers = {
                             'Content-Type': 'application/json'
                         }
@@ -174,7 +181,7 @@ exports.update = async function (req, res) {
                             headers: headers
                         }
                         await request(options)
-                    }                    
+                    }
 
                 }
                 break;
@@ -208,11 +215,11 @@ exports.update = async function (req, res) {
                             id: investmentResult.profile_id,
                         }
                     });
-                    if(profileDetails){
+                    if (profileDetails) {
                         var headers = {
                             'Content-Type': 'application/json'
                         }
-                        if(investmentResult.type == 'Purchase'){
+                        if (investmentResult.type == 'Purchase') {
                             var options = {
                                 url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
                                 method: 'POST',
@@ -220,7 +227,7 @@ exports.update = async function (req, res) {
                             }
                             await request(options)
                         }
-                        else if(investmentResult.type == 'Redeem'){
+                        else if (investmentResult.type == 'Redeem') {
                             var options = {
                                 url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
                                 method: 'POST',
@@ -228,8 +235,80 @@ exports.update = async function (req, res) {
                             }
                             await request(options)
                         }
-                        
-                    }             
+
+                    }
+                }
+                break;
+            case 'withdraw':
+            case 'deposit':
+                const depositResult = await depositModel.findByPk(req.body.deposit_id);
+                const depositHistoryResult = await deposithistoryModel.findOne({
+                    where: {
+                        id: req.body.deposithistory_id,
+                    }
+                });
+                const paymentDepositDetails2 = await paymentModel.findOne({
+                    where: {
+                        type: depositHistoryResult.paymenttype,
+                    }
+                });
+                if (req.body.status == 2 && (depositHistoryResult.type == 'withdraw') && (!paymentDepositDetails2 || (Number(paymentDepositDetails2.value) < Number(depositHistoryResult.value)))) {
+                    res.status(500).send({ message: 'Amount is not available' });
+                    return;
+                }
+                
+                await depositHistoryResult.update({ status: req.body.status });
+                if(req.body.status == 2 && (depositHistoryResult.type == 'withdraw')){
+                    await depositResult.update({ status: 3 });
+                }
+                else if(depositResult.status != 2){
+                    await depositResult.update({ status: req.body.status });
+                }
+                else if(req.body.status == 2){
+                    let value = Number(depositResult.value) + Number(depositHistoryResult.value)
+                    await depositResult.update({ value: value });
+                }
+                
+                if (req.body.status == 2) {
+                    let paymentValue2 = 0;
+                    if (paymentDepositDetails2 && paymentDepositDetails2.value) {
+                        if (depositHistoryResult.type == 'deposit') {
+                            paymentValue2 = Number(paymentDepositDetails2.value) + Number(depositHistoryResult.value);
+                        }
+                        else {
+                            paymentValue2 = Number(paymentDepositDetails2.value) - Number(depositHistoryResult.value);
+                        }
+                    }
+                    await paymentModel.update({ value: paymentValue2 }, { where: { type: depositHistoryResult.paymenttype } });
+                    await paymenthistoryModel.create({ type: depositHistoryResult.paymenttype, value: paymentValue2 });
+
+                    // const profileDetails = await profileModel.findOne({
+                    //     where: {
+                    //         id: depositResult.profile_id,
+                    //     }
+                    // });
+                    // if (profileDetails) {
+                    //     var headers = {
+                    //         'Content-Type': 'application/json'
+                    //     }
+                    //     if (depositHistoryResult.type == 'deposit') {
+                    //         var options = {
+                    //             url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+                    //             method: 'POST',
+                    //             headers: headers
+                    //         }
+                    //         await request(options)
+                    //     }
+                    //     else if (depositResult.type == 'Withdraw') {
+                    //         var options = {
+                    //             url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                    //             method: 'POST',
+                    //             headers: headers
+                    //         }
+                    //         await request(options)
+                    //     }
+
+                    // }
                 }
                 break;
             case 'Repayment':
@@ -262,7 +341,7 @@ exports.update = async function (req, res) {
                             id: repaymentResult.profile_id,
                         }
                     });
-                    if(profileDetails){
+                    if (profileDetails) {
                         var headers = {
                             'Content-Type': 'application/json'
                         }
@@ -288,18 +367,18 @@ exports.update = async function (req, res) {
 };
 
 async function calculateInterest(activeLoansInterest) {
-    for(var i = 0;i< activeLoansInterest.length;i++){
+    for (var i = 0; i < activeLoansInterest.length; i++) {
         activeLoansInterest[i].dataValues['interestAmount'] = ((Number(activeLoansInterest[i].principle) * (Number(activeLoansInterest[i].rateofinterest) / 100)) / 365) * Number(activeLoansInterest[i].dataValues.days_between);
         activeLoansInterest[i].dataValues['interestAmount'] = Number(activeLoansInterest[i].dataValues['interestAmount']) + Number(activeLoansInterest[i].principle);
-        if(activeLoansInterest[i].dataValues['interestAmount']){
+        if (activeLoansInterest[i].dataValues['interestAmount']) {
             activeLoansInterest[i].dataValues['interestAmount'] = Number(activeLoansInterest[i].dataValues['interestAmount']).toFixed(2)
         }
     }
     return activeLoansInterest;
-  }
+}
 
 async function overdueSend(loans) {
-    for(var i = 0;i< loans.length;i++){
+    for (var i = 0; i < loans.length; i++) {
         var headers = {
             'Content-Type': 'application/json'
         }
@@ -311,10 +390,10 @@ async function overdueSend(loans) {
         await request(options)
     }
     return loans;
-  }
+}
 
 async function dueSend(loans) {
-    for(var i = 0;i< loans.length;i++){
+    for (var i = 0; i < loans.length; i++) {
         var headers = {
             'Content-Type': 'application/json'
         }
@@ -326,7 +405,7 @@ async function dueSend(loans) {
         await request(options)
     }
     return loans;
-  }
+}
 
 exports.eventDueOverdue = async function (req, res) {
     const overdueLoans = await loanModel.findAll({
@@ -337,7 +416,7 @@ exports.eventDueOverdue = async function (req, res) {
                 ),
                 'days_between'
             ],
-            'mobile','id',
+            'mobile', 'id',
             'principle',
             'rateofinterest'
         ],
@@ -357,7 +436,7 @@ exports.eventDueOverdue = async function (req, res) {
                 ),
                 'days_between'
             ],
-            'mobile','id',
+            'mobile', 'id',
             'principle',
             'rateofinterest'
         ],
@@ -377,7 +456,7 @@ exports.eventDueOverdue = async function (req, res) {
                 ),
                 'days_between'
             ],
-            'mobile','id',
+            'mobile', 'id',
             'principle',
             'rateofinterest'
         ],
@@ -399,5 +478,5 @@ exports.eventDueOverdue = async function (req, res) {
     await overdueSend(overdueInterest);
     await dueSend(dueInterest);
 
-    res.send({overdueLoans, dueLoans, overdueInterest, dueInterest, loansdaysbetween});
+    res.send({ overdueLoans, dueLoans, overdueInterest, dueInterest, loansdaysbetween });
 }

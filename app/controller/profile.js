@@ -6,7 +6,9 @@ const profilehistoryModel = MODELS.profilehistory;
 const approvalsModel = MODELS.approvals;
 const loanModel = MODELS.loan;
 const investmentModel = MODELS.investment;
+const depositModel = MODELS.deposit;
 const repaymenthistoryModel = MODELS.repaymenthistory;
+const deposithistoryModel = MODELS.deposithistory;
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -249,7 +251,12 @@ exports.search = async function (req, res) {
             where: { profile_id: isMobileExist.id },
             order: [['updatedAt', 'DESC']]
         });
-        res.send({ loans, profile: isMobileExist, investment, repayment });
+        const deposit = await depositModel.findAll({
+            where: { profile_id: isMobileExist.id },
+            include: [deposithistoryModel],
+            order: [['updatedAt', 'DESC']]
+        });
+        res.send({ loans, profile: isMobileExist, investment, repayment, deposit: deposit });
     } else {
         res.status(500).send({ message: 'Mobile number not exists' });
     }
