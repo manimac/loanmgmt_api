@@ -8,9 +8,24 @@ const deposithistoryModel = MODELS.deposithistory;
 
 exports.list = async function (req, res) {
     try {
+        var where = {};
+        if (req.body.mobile) {
+            where['$Profile.mobile$'] = { [Op.startsWith]: req.body.mobile };
+        }
+        if (req.body.beneficiaryname) {
+            where['beneficiaryname'] = { [Op.startsWith]: req.body.beneficiaryname };
+        }
+        if (req.body.status) {
+            where['status'] = req.body.status;
+        }
         const entries = await Model.findAll({
             order: [['updatedAt', 'DESC']],
-            include: [profileModel]
+            where,
+            include: [{
+                    model: profileModel,
+                    as: 'profile',
+                    association: 'Profile'
+                }, deposithistoryModel]
         });
         res.send(entries || null);
     } catch (err) {

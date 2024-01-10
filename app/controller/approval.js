@@ -282,33 +282,33 @@ exports.update = async function (req, res) {
                     await paymentModel.update({ value: paymentValue2 }, { where: { type: depositHistoryResult.paymenttype } });
                     await paymenthistoryModel.create({ type: depositHistoryResult.paymenttype, value: paymentValue2 });
 
-                    // const profileDetails = await profileModel.findOne({
-                    //     where: {
-                    //         id: depositResult.profile_id,
-                    //     }
-                    // });
-                    // if (profileDetails) {
-                    //     var headers = {
-                    //         'Content-Type': 'application/json'
-                    //     }
-                    //     if (depositHistoryResult.type == 'deposit') {
-                    //         var options = {
-                    //             url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
-                    //             method: 'POST',
-                    //             headers: headers
-                    //         }
-                    //         await request(options)
-                    //     }
-                    //     else if (depositResult.type == 'Withdraw') {
-                    //         var options = {
-                    //             url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
-                    //             method: 'POST',
-                    //             headers: headers
-                    //         }
-                    //         await request(options)
-                    //     }
+                    const profileDetails = await profileModel.findOne({
+                        where: {
+                            id: depositResult.profile_id,
+                        }
+                    });
+                    if (profileDetails) {
+                        var headers = {
+                            'Content-Type': 'application/json'
+                        }
+                        if (depositHistoryResult.type == 'deposit') {
+                            var options = {
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+                                method: 'POST',
+                                headers: headers
+                            }
+                            await request(options)
+                        }
+                        else if (depositResult.type == 'Withdraw') {
+                            var options = {
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                                method: 'POST',
+                                headers: headers
+                            }
+                            await request(options)
+                        }
 
-                    // }
+                    }
                 }
                 break;
             case 'Repayment':

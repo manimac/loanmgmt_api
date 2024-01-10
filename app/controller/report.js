@@ -9,6 +9,7 @@ const loanhistoryModel = MODELS.loanhistory;
 const investmentModel = MODELS.investment;
 const repaymenthistoryModel = MODELS.repaymenthistory;
 const paymentModel = MODELS.payment;
+const deposithistoryModel = MODELS.deposithistory;
 
 async function calculateInterest(activeLoansInterest) {
     let interestAmount = 0;
@@ -235,6 +236,33 @@ exports.list = async function (req, res) {
             ]
         });
 
+        const deposited = await deposithistoryModel.findAll({
+            where: {
+                status: 2,
+                type: 'deposit',
+                createdAt: {
+                    [Op.between]: [req.body.fromdate, req.body.todate]
+                }
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("value"), 'integer')), "totalvalue"],
+                [Sequelize.fn("COUNT", Sequelize.col("id")), "totalcount"]
+            ]
+        });
+        const withdrawn = await deposithistoryModel.findAll({
+            where: {
+                status: 2,
+                type: 'withdraw',
+                createdAt: {
+                    [Op.between]: [req.body.fromdate, req.body.todate]
+                }
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("value"), 'integer')), "totalvalue"],
+                [Sequelize.fn("COUNT", Sequelize.col("id")), "totalcount"]
+            ]
+        });
+
 
         let units = (PurchaseUnitsCnt && PurchaseUnitsCnt[0].dataValues && RedeemUnitsCnt && RedeemUnitsCnt[0].dataValues) ? (PurchaseUnitsCnt[0].dataValues.total - RedeemUnitsCnt[0].dataValues.total) : 0;
         // const units = await investmentModel.sum('units')
@@ -284,6 +312,22 @@ exports.list = async function (req, res) {
             unitRedeemedAmount = unitsRedeemed[0].dataValues.totalvalue;
         }
 
+        let depositedTrans = 0;
+        let depositedAmount = 0;
+        if (deposited && Array.isArray(deposited) && deposited.length > 0) {
+            depositedTrans = deposited[0].dataValues.totalcount;
+            depositedAmount = deposited[0].dataValues.totalvalue;
+        }
+
+        let withdrawnTrans = 0;
+        let withdrawnAmount = 0;
+        if (withdrawn && Array.isArray(withdrawn) && withdrawn.length > 0) {
+            withdrawnTrans = withdrawn[0].dataValues.totalcount;
+            withdrawnAmount = withdrawn[0].dataValues.totalvalue;
+        }
+
+
+
         if (netAsset) {
             netAsset = parseFloat(netAsset).toFixed(2);
         }
@@ -301,7 +345,7 @@ exports.list = async function (req, res) {
 
         let investmentsGroup = await calculateInvestmentsGroup(investments);
 
-        res.send({ newLoansTrans: newLoansTrans, newLoansAmount: newLoansAmount, loanRepaymentsTrans: loanRepaymentsTrans, loanRepaymentsAmount: loanRepaymentsAmount, unitPurchasedTrans: unitPurchasedTrans, unitPurchasedAmount: unitPurchasedAmount, unitRedeemedTrans: unitRedeemedTrans, unitRedeemedAmount: unitRedeemedAmount, activeLoan: noOfActiveLoan, activeLoanAmount: activeLoanAmount, activeLoanInterest: activeInterest, totalLoanInterest: totalLoanInterest, cash: cashValue, bank: bankValue, netAsset: netAsset, noOfOverdue: overdueLoans.length, overduePrinciple: overdueLoanPrinciple, overdueInterest: overdueInterest, totalOverdue: totaloverdueAmount, noOfInvestments: investmentsGroup.length, noOfUnits: units, unitRate: unitrate });
+        res.send({ newLoansTrans: newLoansTrans, newLoansAmount: newLoansAmount, loanRepaymentsTrans: loanRepaymentsTrans, loanRepaymentsAmount: loanRepaymentsAmount, unitPurchasedTrans: unitPurchasedTrans, unitPurchasedAmount: unitPurchasedAmount, unitRedeemedTrans: unitRedeemedTrans, unitRedeemedAmount: unitRedeemedAmount, activeLoan: noOfActiveLoan, activeLoanAmount: activeLoanAmount, activeLoanInterest: activeInterest, totalLoanInterest: totalLoanInterest, cash: cashValue, bank: bankValue, netAsset: netAsset, noOfOverdue: overdueLoans.length, overduePrinciple: overdueLoanPrinciple, overdueInterest: overdueInterest, totalOverdue: totaloverdueAmount, noOfInvestments: investmentsGroup.length, noOfUnits: units, unitRate: unitrate, withdrawnTrans: withdrawnTrans, withdrawnAmount: withdrawnAmount, depositedTrans, depositedAmount });
     } catch (err) {
         res.status(500).send(err);
     }
