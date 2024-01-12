@@ -236,6 +236,27 @@ exports.list = async function (req, res) {
             ]
         });
 
+        const DepositUnitsCnt = await deposithistoryModel.findAll({
+            where: {
+                status: 2,
+                type: 'deposit'
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("units"), 'double')), "total"]
+            ]
+        });
+
+        const WithdrawUnitsCnt = await deposithistoryModel.findAll({
+            where: {
+                status: 2,
+                type: 'withdraw'
+            },
+            attributes: [
+                [Sequelize.fn("SUM", Sequelize.cast(Sequelize.col("units"), 'double')), "total"]
+            ]
+        });
+
+
         const deposited = await deposithistoryModel.findAll({
             where: {
                 status: 2,
@@ -265,7 +286,10 @@ exports.list = async function (req, res) {
 
 
         let units = (PurchaseUnitsCnt && PurchaseUnitsCnt[0].dataValues && RedeemUnitsCnt && RedeemUnitsCnt[0].dataValues) ? (PurchaseUnitsCnt[0].dataValues.total - RedeemUnitsCnt[0].dataValues.total) : 0;
+
+        let depositunits = (DepositUnitsCnt && DepositUnitsCnt[0].dataValues && WithdrawUnitsCnt && WithdrawUnitsCnt[0].dataValues) ? (DepositUnitsCnt[0].dataValues.total - WithdrawUnitsCnt[0].dataValues.total) : 0;
         // const units = await investmentModel.sum('units')
+        units = units + depositunits;
         const activeInterest = await calculateInterest(activeLoansInterest);
         let activeLoanAmount = 0;
         let noOfActiveLoan = 0;

@@ -43,6 +43,8 @@ exports.create = async function (req, res) {
             status: 0,
             profile_id: req.body.profile_id,
             maker_id: req.body.maker_id,
+            units: req.body.units,
+            rate: req.body.rate,
             deposit_id: depositRec.id,
         };
         const depositthistoryRec = await deposithistoryModel.create(obj);

@@ -48,7 +48,7 @@ exports.filterlist = async function (req, res) {
                 {
                     model: profileModel,
                     as: 'checker'
-                }, profilehistoryModel, loanhistoryModel, loanModel, investmentModel, repaymenthistoryModel]
+                }, profilehistoryModel, loanhistoryModel, loanModel, investmentModel, repaymenthistoryModel, deposithistoryModel]
         });
         res.send(entries || null);
     } catch (err) {
@@ -293,7 +293,7 @@ exports.update = async function (req, res) {
                         }
                         if (depositHistoryResult.type == 'deposit') {
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Hi%20` + profileDetails.name + `,%20Dep%20No%20` + depositResult.id + `,%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `,%20Instl%202,%20Rs.` + depositHistoryResult.value + `/-%20Deposited.%20Thank%20you%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
                                 method: 'POST',
                                 headers: headers
                             }
@@ -301,7 +301,7 @@ exports.update = async function (req, res) {
                         }
                         else if (depositResult.type == 'Withdraw') {
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + depositResult.value + `%20on%20` + formatnormalDate(depositResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Hi%20` + profileDetails.name + `,%20Dep%20No%20` + depositResult.id + `,%20closed%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `%20and%20settled%20Rs.` + depositHistoryResult.value + `/-%20.%20Thank%20you%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
                                 method: 'POST',
                                 headers: headers
                             }

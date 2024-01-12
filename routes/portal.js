@@ -21,6 +21,7 @@ router.delete('/profile/delete/:id', profile.delete);
 router.post('/profile/login', profile.login);
 router.post('/profile/loginwithotp', profile.loginwithotp);
 router.post('/profile/search', profile.search);
+router.post('/profile/searchUnits', profile.searchUnits);
 
 router.get('/loan/list', loan.list);
 router.post('/loan/filterlist', loan.filterlist);

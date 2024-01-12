@@ -256,7 +256,33 @@ exports.search = async function (req, res) {
             include: [deposithistoryModel],
             order: [['updatedAt', 'DESC']]
         });
-        res.send({ loans, profile: isMobileExist, investment, repayment, deposit: deposit });
+        const depositAcc = await depositModel.findAll({
+            include: [deposithistoryModel],
+            order: [['updatedAt', 'DESC']]
+        });
+        res.send({ loans, profile: isMobileExist, investment, repayment, deposit: deposit, depositAcc: depositAcc });
+    } else {
+        res.status(500).send({ message: 'Mobile number not exists' });
+    }
+}
+
+
+exports.searchUnits = async function (req, res) {
+    const where = {
+        mobile: req.body.mobile,
+        ...(req.body.role !== 'Admin' && {role: 'Client'})
+    };
+    const isMobileExist = await Model.findOne({ where });
+    if (isMobileExist) {
+        const investment = await investmentModel.findAll({
+            where: { profile_id: isMobileExist.id },
+            order: [['updatedAt', 'DESC']]
+        });
+        const depositAcc = await depositModel.findAll({
+            include: [deposithistoryModel],
+            order: [['updatedAt', 'DESC']]
+        });
+        res.send({ profile: isMobileExist, investment, depositAcc: depositAcc });
     } else {
         res.status(500).send({ message: 'Mobile number not exists' });
     }

@@ -4,6 +4,8 @@ const deposithistoryModel = (sequelize, Sequelize) => {
         value: { type: Sequelize.TEXT, allowNull: true },
         type: { type: Sequelize.TEXT, allowNull: true },
         paymenttype: { type: Sequelize.TEXT, allowNull: true },
+        units: { type: Sequelize.STRING, allowNull: true },
+        rate: { type: Sequelize.STRING, allowNull: true },
         status: { type: Sequelize.INTEGER, defaultValue: 0 }
     })
 
