@@ -18,6 +18,9 @@ exports.list = async function (req, res) {
         if (req.body.status) {
             where['status'] = req.body.status;
         }
+        if (req.body.type) {
+            where['type'] = req.body.type;
+        }
         const entries = await Model.findAll({
             order: [['updatedAt', 'DESC']],
             where,
