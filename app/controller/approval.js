@@ -221,7 +221,7 @@ exports.update = async function (req, res) {
                         }
                         if (investmentResult.type == 'Purchase') {
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20deposited%20for%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
                                 method: 'POST',
                                 headers: headers
                             }
@@ -229,7 +229,7 @@ exports.update = async function (req, res) {
                         }
                         else if (investmentResult.type == 'Redeem') {
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20` + profileDetails.name + `,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + investmentResult.value + `%20on%20` + formatnormalDate(investmentResult.createdAt) + `%20withdrawn%20from%20your%20investment,%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
                                 method: 'POST',
                                 headers: headers
                             }
@@ -292,16 +292,19 @@ exports.update = async function (req, res) {
                             'Content-Type': 'application/json'
                         }
                         if (depositHistoryResult.type == 'deposit') {
+
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Hi%20` + profileDetails.name + `,%20Dep%20No%20` + depositResult.id + `,%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `,%20Instl%202,%20Rs.` + depositHistoryResult.value + `/-%20Deposited.%20Thank%20you%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258360`,
+
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + depositHistoryResult.value + `/-%20Deposited%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `%20in%20Dep%20No-` + depositResult.id + `,%20Instl-` + depositHistoryResult.value + `%20.%20http://madrastechnologies.com/portfolios%20-Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000296956`,
                                 method: 'POST',
                                 headers: headers
                             }
                             await request(options)
                         }
-                        else if (depositResult.type == 'Withdraw') {
+                        else if (depositHistoryResult.type.toLowerCase() == 'withdraw') {
+
                             var options = {
-                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Hi%20` + profileDetails.name + `,%20Dep%20No%20` + depositResult.id + `,%20closed%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `%20and%20settled%20Rs.` + depositHistoryResult.value + `/-%20.%20Thank%20you%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258361`,
+                                url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + profileDetails.mobile + `&msg=Dear%20Cust,%20Rs.` + depositHistoryResult.value + `/-%20settled%20on%20` + formatnormalDate(depositHistoryResult.createdAt) + `%20from%20Dep%20No-` + depositResult.id + `.%20http://madrastechnologies.com/portfolios%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000296957`,
                                 method: 'POST',
                                 headers: headers
                             }

@@ -202,7 +202,7 @@ exports.login = async function (req, res) {
             'Content-Type': 'application/json'
         }
         var options = {
-            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + isMobileExist.mobile + `&msg=Dear%20` + isMobileExist.name + `,%20Your%20one%20time%20password%20is%20` + otp + `%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258359`,
+            url: `http://www.smsintegra.com/api/smsapi.aspx?uid=madrastech&pwd=24225&mobile=` + isMobileExist.mobile + `&msg=Dear%20Cust,%20Your%20one%20time%20password%20is%20` + otp + `%20-%20Madras%20Gold%20-Madras%20Technologies&sid=MADTEC&type=0&dtTimeNow=xxxxx&entityid=1601370168033895617&tempid=1607100000000258359`,
             method: 'POST',
             headers: headers
         }
