@@ -10,6 +10,7 @@ const LoanModel = (sequelize, Sequelize) => {
         renewaldate: { type: Sequelize.STRING, allowNull: true },
         rateofinterest: { type: Sequelize.STRING, allowNull: true },
         paymenttype: { type: Sequelize.TEXT, allowNull: true },
+        loantype: { type: Sequelize.TEXT, allowNull: true },
         status: { type: Sequelize.INTEGER, defaultValue: 0 }
     })
 

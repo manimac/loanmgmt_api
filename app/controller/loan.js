@@ -25,6 +25,7 @@ exports.filterlist = async function (req, res) {
       const where = {};
       if (req.body.mobile) where.mobile = { [Op.startsWith]: req.body.mobile };
       if (req.body.status) where.status = req.body.status;
+      if (req.body.loantype) where.loantype = req.body.loantype;
       if (req.body.status === 'Due' || req.body.status === 'Overdue') where.status = 2;
   
       const entries = await Model.findAll({
